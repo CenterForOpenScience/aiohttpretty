@@ -1,0 +1,8 @@
+.env
+.git
+.idea
+**/*.ipynb*
+**/*.pyc
+**/__pycache__
+local.py
+.coverage
