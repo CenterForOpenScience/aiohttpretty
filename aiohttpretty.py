@@ -1,6 +1,7 @@
 import sys
 import json
 import asyncio
+import collections
 
 import aiohttp
 
@@ -24,20 +25,27 @@ class _AioHttPretty:
     @asyncio.coroutine
     def fake_request(self, method, uri, **kwargs):
         try:
-            options = self.registry[(method, uri)]
+            response = self.registry[(method, uri)]
         except KeyError:
             raise Exception('No URLs matching {method} {uri}. Not making request. Go fix your test.'.format(**locals()))
+        if isinstance(response, collections.Sequence):
+            try:
+                response = response.pop(0)
+            except IndexError:
+                raise Exception('No responses left.')
 
         yield from self.process_request(**kwargs)
         self.calls.append(self.make_call(method=method, uri=uri, **kwargs))
         mock_response = aiohttp.client.ClientResponse(method, uri)
-        mock_response._content = options.get('body', 'aiohttpretty')
-        mock_response.headers = aiohttp.client.CaseInsensitiveMultiDict(options.get('headers', {}))
-        mock_response.status = options.get('status', 200)
+        mock_response._content = response.get('body', 'aiohttpretty')
+        mock_response.headers = aiohttp.client.CaseInsensitiveMultiDict(response.get('headers', {}))
+        mock_response.status = response.get('status', 200)
         return mock_response
 
     def register_uri(self, method, uri, **options):
-        self.registry[(method, uri)] = options
+        responses = options.get('responses')
+        value = responses if responses else options
+        self.registry[(method, uri)] = value
 
     def register_json_uri(self, method, uri, **options):
         body = json.dumps(options.pop('body', None)).encode('utf-8')
