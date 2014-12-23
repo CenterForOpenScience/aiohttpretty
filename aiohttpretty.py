@@ -52,6 +52,7 @@ class _AioHttPretty:
         aiohttp.request, self.request = self.request, None
 
     def clear(self):
+        self.calls = []
         self.registry = {}
 
     def compare_call(self, first, second):
