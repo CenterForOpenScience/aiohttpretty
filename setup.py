@@ -1,5 +1,9 @@
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
+
+
+def parse_requirements(requirements):
+    with open(requirements) as f:
+        return [l.strip('\n') for l in f if l.strip('\n') and not l.startswith('#')]
 
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
