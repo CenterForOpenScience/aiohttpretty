@@ -12,7 +12,7 @@ setup(
     description='AioHTTPretty',
     author='',
     author_email='',
-    url='https://github.com/icereval/aiohttpretty',
+    url='https://github.com/CenterForOpenScience/aiohttpretty',
     packages=find_packages(exclude=("tests*", )),
     include_package_data=True,
     install_requires=requirements,
