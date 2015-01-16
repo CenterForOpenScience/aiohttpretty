@@ -1,10 +1,12 @@
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
 
 
-# parse_requirements() returns generator of pip.req.InstallRequirement objects
-install_reqs = parse_requirements('requirements.txt')
-requirements = [str(ir.req) for ir in install_reqs]
+def parse_requirements(requirements):
+    with open(requirements) as f:
+        return [l.strip('\n') for l in f if l.strip('\n') and not l.startswith('#')]
+
+
+requirements = parse_requirements('requirements.txt')
 
 setup(
     name='aiohttpretty',
@@ -12,8 +14,8 @@ setup(
     description='AioHTTPretty',
     author='',
     author_email='',
-    url='https://github.com/icereval/aiohttpretty',
-    packages=find_packages(exclude=("tests*", )),
+    url='https://github.com/CenterForOpenScience/aiohttpretty',
+    packages=find_packages(exclude=('tests*', )),
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
@@ -21,7 +23,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Natural Language :: English',
-        "Programming Language :: Python :: 3",
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
     ],
 )
