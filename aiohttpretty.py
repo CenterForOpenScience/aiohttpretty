@@ -38,7 +38,7 @@ class _AioHttPretty:
         self.calls.append(self.make_call(method=method, uri=uri, **kwargs))
         mock_response = aiohttp.client.ClientResponse(method, uri)
         mock_response._content = response.get('body', 'aiohttpretty')
-        mock_response.headers = aiohttp.client.CaseInsensitiveMultiDict(response.get('headers', {}))
+        mock_response.headers = aiohttp.multidict.CIMultiDict(response.get('headers', {}))
         mock_response.status = response.get('status', 200)
         return mock_response
 
