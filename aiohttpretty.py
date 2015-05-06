@@ -6,6 +6,18 @@ import collections
 import aiohttp
 
 
+class _MockStream(asyncio.StreamReader):
+    def __init__(self, data):
+        super().__init__()
+        if isinstance(data, str):
+            data = data.encode('UTF-8')
+        elif not isinstance(data, bytes):
+            raise TypeError('Data must be either str or bytes, found {!r}'.format(type(data)))
+
+        self.feed_data(data)
+        self.feed_eof()
+
+
 class _AioHttPretty:
     def __init__(self):
         self.calls = []
@@ -37,7 +49,7 @@ class _AioHttPretty:
         yield from self.process_request(**kwargs)
         self.calls.append(self.make_call(method=method, uri=uri, **kwargs))
         mock_response = aiohttp.client.ClientResponse(method, uri)
-        mock_response._content = response.get('body', 'aiohttpretty')
+        mock_response.content = _MockStream(response.get('body', 'aiohttpretty'))
         mock_response.headers = aiohttp.multidict.CIMultiDict(response.get('headers', {}))
         mock_response.status = response.get('status', 200)
         return mock_response
