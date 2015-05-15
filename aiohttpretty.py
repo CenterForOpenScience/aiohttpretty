@@ -14,6 +14,7 @@ class _MockStream(asyncio.StreamReader):
         elif not isinstance(data, bytes):
             raise TypeError('Data must be either str or bytes, found {!r}'.format(type(data)))
 
+        self.size = len(data)
         self.feed_data(data)
         self.feed_eof()
 
@@ -63,7 +64,15 @@ class _AioHttPretty:
         self.calls.append(self.make_call(method=method, uri=uri, **kwargs))
         mock_response = aiohttp.client.ClientResponse(method, uri)
         mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
-        mock_response.headers = aiohttp.multidict.CIMultiDict(response.get('headers', {}))
+
+        if response.get('auto_length'):
+            defaults = {
+                'Content-Length': str(mock_response.content.size)
+            }
+        else:
+            defaults = {}
+
+        mock_response.headers = aiohttp.multidict.CIMultiDict(response.get('headers', defaults))
         mock_response.status = response.get('status', 200)
         return mock_response
 
