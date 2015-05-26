@@ -3,8 +3,35 @@ import json
 import asyncio
 import collections
 
+import furl
 import aiohttp
 
+
+class ImmutableFurl:
+
+    def __init__(self, url, params=None):
+        params = params or {}
+        self._url = url
+        self._furl = furl.furl(url)
+        self._furl.set(args={})
+        self._params = furl.furl(url).args.addlist(list(params.items()))
+
+    @property
+    def url(self):
+        return self._furl.url
+
+    @property
+    def params(self):
+        return self._params
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return hash(self.url + ''.join([
+            self.params[x] or ''
+            for x in sorted(self.params)
+        ]))
 
 class _MockStream(asyncio.StreamReader):
     def __init__(self, data):
@@ -50,10 +77,13 @@ class _AioHttPretty:
 
     @asyncio.coroutine
     def fake_request(self, method, uri, **kwargs):
+        url = ImmutableFurl(uri)
+
         try:
-            response = self.registry[(method, uri)]
+            response = self.registry[(method, url)]
         except KeyError:
             raise Exception('No URLs matching {method} {uri}. Not making request. Go fix your test.'.format(**locals()))
+
         if isinstance(response, collections.Sequence):
             try:
                 response = response.pop(0)
@@ -77,9 +107,11 @@ class _AioHttPretty:
         return mock_response
 
     def register_uri(self, method, uri, **options):
-        responses = options.get('responses')
-        value = responses if responses else options
-        self.registry[(method, uri)] = value
+        if any(x.get('params') for x in options.get('responses', [])):
+                raise ValueError('Cannot specify params in responses, call register multiple times.')
+
+        url = ImmutableFurl(uri, params=options.pop('params', {}))
+        self.registry[(method, url)] = options.get('responses', options)
 
     def register_json_uri(self, method, uri, **options):
         body = json.dumps(options.pop('body', None)).encode('utf-8')
