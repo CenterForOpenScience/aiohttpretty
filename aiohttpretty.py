@@ -1,4 +1,5 @@
 import sys
+import copy
 import json
 import asyncio
 import collections
@@ -15,6 +16,9 @@ class ImmutableFurl:
         self._furl = furl.furl(url)
         self._furl.set(args={})
         self._params = furl.furl(url).args.addlist(list(params.items()))
+
+    def with_out_params(self):
+        return ImmutableFurl(self._url)
 
     @property
     def url(self):
@@ -91,7 +95,7 @@ class _AioHttPretty:
                 raise Exception('No responses left.')
 
         yield from self.process_request(**kwargs)
-        self.calls.append(self.make_call(method=method, uri=uri, **kwargs))
+        self.calls.append(self.make_call(method=method, uri=ImmutableFurl(uri, params=kwargs.pop('params', None)), **kwargs))
         mock_response = aiohttp.client.ClientResponse(method, uri)
         mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
 
@@ -135,8 +139,13 @@ class _AioHttPretty:
                 return False
         return True
 
-    def has_call(self, **kwargs):
+    def has_call(self, uri, check_params=True, **kwargs):
+        kwargs['uri'] = ImmutableFurl(uri, params=kwargs.pop('params', None))
+
         for call in self.calls:
+            if not check_params:
+                call = copy.deepcopy(call)
+                call['uri'] = call['uri'].with_out_params()
             if self.compare_call(kwargs, call):
                 return True
         return False
