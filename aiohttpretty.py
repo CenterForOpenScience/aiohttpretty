@@ -6,6 +6,7 @@ import collections
 
 import furl
 import aiohttp
+import aiohttp.streams
 
 
 class ImmutableFurl:
@@ -37,7 +38,7 @@ class ImmutableFurl:
             for x in sorted(self.params)
         ]))
 
-class _MockStream(asyncio.StreamReader):
+class _MockStream(aiohttp.streams.StreamReader):
     def __init__(self, data):
         super().__init__()
         if isinstance(data, str):
