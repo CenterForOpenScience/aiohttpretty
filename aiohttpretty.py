@@ -12,14 +12,17 @@ import aiohttp.streams
 class ImmutableFurl:
 
     def __init__(self, url, params=None):
-        params = params or {}
         self._url = url
         self._furl = furl.furl(url)
+        self._params = furl.furl(url).args
         self._furl.set(args={})
-        self._params = furl.furl(url).args.addlist(list(params.items()))
+
+        params = params or {}
+        for (k, v) in params.items():
+            self._params.add(k, v)
 
     def with_out_params(self):
-        return ImmutableFurl(self._url)
+        return ImmutableFurl(self.url)
 
     @property
     def url(self):
