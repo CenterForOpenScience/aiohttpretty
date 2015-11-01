@@ -85,7 +85,8 @@ class _AioHttPretty:
 
     @asyncio.coroutine
     def fake_request(self, method, uri, **kwargs):
-        url = ImmutableFurl(uri)
+        params = kwargs.get('params', None)
+        url = ImmutableFurl(uri, params=params)
 
         try:
             response = self.registry[(method, url)]
@@ -118,7 +119,9 @@ class _AioHttPretty:
         if any(x.get('params') for x in options.get('responses', [])):
                 raise ValueError('Cannot specify params in responses, call register multiple times.')
 
-        url = ImmutableFurl(uri, params=options.pop('params', {}))
+        params = options.pop('params', {})
+        url = ImmutableFurl(uri, params=params)
+
         self.registry[(method, url)] = options.get('responses', options)
 
     def register_json_uri(self, method, uri, **options):
