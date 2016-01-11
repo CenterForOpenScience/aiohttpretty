@@ -3,6 +3,7 @@ import copy
 import json
 import asyncio
 import collections
+from unittest import mock
 
 import furl
 import aiohttp
@@ -103,6 +104,7 @@ class _AioHttPretty:
         self.calls.append(self.make_call(method=method, uri=ImmutableFurl(uri, params=kwargs.pop('params', None)), **kwargs))
         mock_response = aiohttp.client.ClientResponse(method, uri)
         mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
+        mock_response._loop = mock.Mock()
 
         if response.get('auto_length'):
             defaults = {
