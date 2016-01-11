@@ -103,6 +103,7 @@ class _AioHttPretty:
         self.calls.append(self.make_call(method=method, uri=ImmutableFurl(uri, params=kwargs.pop('params', None)), **kwargs))
         mock_response = aiohttp.client.ClientResponse(method, uri)
         mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
+        mock_response._post_init(asyncio.get_event_loop())
 
         if response.get('auto_length'):
             defaults = {
