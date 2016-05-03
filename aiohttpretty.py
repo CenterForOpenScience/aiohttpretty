@@ -133,10 +133,10 @@ class _AioHttPretty:
         self.register_uri(method, uri, body=body, headers=headers, **options)
 
     def activate(self):
-        aiohttp.request, self.request = self.fake_request, aiohttp.request
+        aiohttp.ClientSession._request, self.request = self.fake_request, aiohttp.ClientSession._request
 
     def deactivate(self):
-        aiohttp.request, self.request = self.request, None
+        aiohttp.ClientSession._request, self.request = self.request, None
 
     def clear(self):
         self.calls = []
