@@ -1,0 +1,9 @@
+*********
+ChangeLog
+*********
+
+0.0.2 (2016-05-03)
+==================
+- aiohttpretty now mocks aiohttp.ClientSession._request. aiohttp.request has been deprecated and
+  calls ._request directly. aiohttp.ClientSession.request wraps _.request with a context wrapper.
+- bump minimum aiohttp dependency to v0.18.0
