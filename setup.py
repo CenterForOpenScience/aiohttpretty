@@ -10,7 +10,7 @@ requirements = parse_requirements('requirements.txt')
 
 setup(
     name='aiohttpretty',
-    version='0.0.1',
+    version='0.0.2',
     description='AioHTTPretty',
     author='',
     author_email='',
@@ -25,5 +25,6 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
 )

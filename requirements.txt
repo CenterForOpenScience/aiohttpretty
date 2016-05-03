@@ -1,2 +1,2 @@
 furl
-aiohttp
+aiohttp>=0.18.0
