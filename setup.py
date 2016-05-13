@@ -16,6 +16,7 @@ setup(
     author_email='',
     url='https://github.com/CenterForOpenScience/aiohttpretty',
     packages=find_packages(exclude=('tests*', )),
+    py_modules=['aiohttpretty'],
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
