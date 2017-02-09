@@ -12,8 +12,8 @@ setup(
     name='aiohttpretty',
     version='0.0.2',
     description='AioHTTPretty',
-    author='',
-    author_email='',
+    author='Center for Open Science',
+    author_email='contact@cos.io',
     url='https://github.com/CenterForOpenScience/aiohttpretty',
     packages=find_packages(exclude=('tests*', )),
     py_modules=['aiohttpretty'],
@@ -27,5 +27,6 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 )
