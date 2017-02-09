@@ -92,7 +92,10 @@ class _AioHttPretty:
         try:
             response = self.registry[(method, url)]
         except KeyError:
-            raise Exception('No URLs matching {method} {uri} with params {url.params}. Not making request. Go fix your test.'.format(**locals()))
+            raise Exception(
+                'No URLs matching {method} {uri} with params {url.params}. Not making request. '
+                'Go fix your test.'.format(**locals())
+            )
 
         if isinstance(response, collections.Sequence):
             try:
@@ -101,7 +104,10 @@ class _AioHttPretty:
                 raise Exception('No responses left.')
 
         yield from self.process_request(**kwargs)
-        self.calls.append(self.make_call(method=method, uri=ImmutableFurl(uri, params=kwargs.pop('params', None)), **kwargs))
+        self.calls.append(
+            self.make_call(method=method, uri=ImmutableFurl(uri, params=kwargs.pop('params', None)),
+                           **kwargs)
+        )
         mock_response = aiohttp.client.ClientResponse(method, uri)
         mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
         mock_response._loop = mock.Mock()

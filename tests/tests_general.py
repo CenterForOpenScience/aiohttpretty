@@ -1,8 +1,12 @@
-import pytest
-import aiohttpretty
-import unittest
-import asyncio
 import json
+import asyncio
+import unittest
+
+import pytest
+from furl import furl
+
+import aiohttpretty
+
 
 def async_test(f):
     def wrapper(*args, **kwargs):
@@ -57,9 +61,10 @@ class TestGeneral(unittest.TestCase):
     @async_test
     async def test_param_handling(self):
         url = 'http://example-params.com/?test=test'
-        desired_error_msg = "No URLs matching GET http://example-params.com/?test=test with params {'test': 'test'}. " \
-                            "Not making request. Go fix your test."
-
+        desired_error_msg = (
+            "No URLs matching GET http://example-params.com/?test=test with params {'test': 'test'}. "
+            "Not making request. Go fix your test."
+        )
         try:
             await aiohttpretty.fake_request('GET', url)
         except Exception as exception:
