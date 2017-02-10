@@ -2,6 +2,15 @@
 ChangeLog
 *********
 
+0.1.0 (2017-02-10)
+==================
+- aiohttpretty will now install itself into your site_packages. (thanks, @aluminiumgeek!)
+- The error message for unhandled requests now show the query parameters in the request. No more
+wondering why it's complaining about unhandled url 'http://foo.com/', when it's cleary registered
+RIGHT THERE! (thanks, @Johnetordoff!)
+- aiohttpretty now has tests! (thanks, @Johnetordoff!)
+- Added a CONTRIBUTING.rst and AUTHORS.rst.
+
 0.0.2 (2016-05-03)
 ==================
 - aiohttpretty now mocks aiohttp.ClientSession._request. aiohttp.request has been deprecated and
