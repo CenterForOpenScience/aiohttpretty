@@ -6,3 +6,9 @@
 **/__pycache__
 local.py
 .coverage
+.cache
+.eggs
+.python-version
+*.egg-info/
+build/
+dist/

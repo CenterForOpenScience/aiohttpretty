@@ -10,12 +10,13 @@ requirements = parse_requirements('requirements.txt')
 
 setup(
     name='aiohttpretty',
-    version='0.0.2',
+    version='0.1.0',
     description='AioHTTPretty',
-    author='',
-    author_email='',
+    author='Center for Open Science',
+    author_email='contact@cos.io',
     url='https://github.com/CenterForOpenScience/aiohttpretty',
     packages=find_packages(exclude=('tests*', )),
+    py_modules=['aiohttpretty'],
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
@@ -26,5 +27,6 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 )
