@@ -3,7 +3,6 @@ import asyncio
 import unittest
 
 import pytest
-from furl import furl
 
 import aiohttpretty
 
@@ -15,6 +14,7 @@ def async_test(f):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(future)
     return wrapper
+
 
 class TestGeneral(unittest.TestCase):
 
@@ -50,7 +50,7 @@ class TestGeneral(unittest.TestCase):
     @async_test
     async def test_register_json_uri(self):
         url = 'http://example.com/'
-        desired_response = {'test_key' : 'test_value'}
+        desired_response = {'test_key': 'test_value'}
 
         aiohttpretty.register_json_uri('GET', url, body=desired_response)
         options = aiohttpretty.registry[('GET', 'http://example.com/')]
