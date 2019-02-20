@@ -10,7 +10,7 @@ requirements = parse_requirements('requirements.txt')
 
 setup(
     name='aiohttpretty',
-    version='0.1.0',
+    version='19.0.0',
     description='AioHTTPretty',
     author='Center for Open Science',
     author_email='contact@cos.io',
@@ -24,8 +24,6 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],

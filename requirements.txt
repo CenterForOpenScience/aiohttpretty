@@ -1,2 +1,4 @@
-furl
-aiohttp>=0.18.0
+aiohttp==3.5.4
+furl==2.0.0
+multidict==4.5.2
+yarl==1.3.0
