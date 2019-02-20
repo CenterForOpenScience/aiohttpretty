@@ -2,9 +2,7 @@
 aiohttpretty
 ============
 
-A simple asyncio compatible httpretty mock using aiohttp.  Tells aiohttp to return bespoke payloads
-from certain urls.  If aiohttp is used to access a url that isn't mocked, throws an error to
-prevent tests from making live requests.
+A simple ``asyncio`` compatible ``httpretty`` mock using ``aiohttp``. Tells ``aiohttp`` to return bespoke payloads from certain urls.  If ``aiohttp`` is used to access a url that isn't mocked, throws an error to prevent tests from making live requests.
 
 
 SYNOPSIS
@@ -30,7 +28,6 @@ SYNOPSIS
       aiohttpretty.register_json_uri('GET', bad_url, body=bad_response)
 
       # .get_keys_from_url() calls .keys() on response
-
       keys_from_good = await myproject.get_keys_from_url(good_url)
       assert keys_from_good == ['dog', 'duck']
 
