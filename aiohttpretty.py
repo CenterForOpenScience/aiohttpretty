@@ -17,7 +17,6 @@ from aiohttp.base_protocol import BaseProtocol
 
 # TODO: Add static type checker with `mypy`
 # TODO: Update docstr for most methods
-# TODO: Improve test coverage
 
 class ImmutableFurl:
 
@@ -58,11 +57,6 @@ class _MockStream(StreamReader):
 
         protocol = BaseProtocol(Mock())
         super().__init__(protocol)
-
-        if isinstance(data, str):
-            data = data.encode('UTF-8')
-        elif not isinstance(data, bytes):
-            raise TypeError('Data must be either str or bytes, found {!r}'.format(type(data)))
 
         self.size = len(data)
         self.feed_data(data)
@@ -207,6 +201,9 @@ class _AioHttPretty:
         return True
 
     def has_call(self, uri, check_params=True, **kwargs):
+        """Check to see if the given uri was called.  By default will verify that the query params
+        match up.  Setting ``check_params`` to `False` will strip params from the *called* uri, not
+        the passed-in uri."""
         kwargs['uri'] = ImmutableFurl(uri, params=kwargs.pop('params', None))
         for call in self.calls:
             if not check_params:
