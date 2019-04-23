@@ -3,19 +3,27 @@ import copy
 import json
 import asyncio
 import collections
-from unittest import mock
+from unittest.mock import Mock
 
-import furl
-import aiohttp
-import aiohttp.streams
+from yarl import URL
+from furl import furl
+from multidict import CIMultiDict
+from aiohttp import ClientSession
+from aiohttp.helpers import TimerNoop
+from aiohttp.streams import StreamReader
+from aiohttp.client import ClientResponse
+from aiohttp.base_protocol import BaseProtocol
 
+
+# TODO: Add static type checker with `mypy`
+# TODO: Update docstr for most methods
 
 class ImmutableFurl:
 
     def __init__(self, url, params=None):
         self._url = url
-        self._furl = furl.furl(url)
-        self._params = furl.furl(url).args
+        self._furl = furl(url)
+        self._params = furl(url).args
         self._furl.set(args={})
 
         params = params or {}
@@ -42,13 +50,13 @@ class ImmutableFurl:
             for x in sorted(self.params)
         ]))
 
-class _MockStream(aiohttp.streams.StreamReader):
+
+class _MockStream(StreamReader):
+
     def __init__(self, data):
-        super().__init__()
-        if isinstance(data, str):
-            data = data.encode('UTF-8')
-        elif not isinstance(data, bytes):
-            raise TypeError('Data must be either str or bytes, found {!r}'.format(type(data)))
+
+        protocol = BaseProtocol(Mock())
+        super().__init__(protocol)
 
         self.size = len(data)
         self.feed_data(data)
@@ -56,6 +64,7 @@ class _MockStream(aiohttp.streams.StreamReader):
 
 
 def _wrap_content_stream(content):
+
     if isinstance(content, str):
         content = content.encode('utf-8')
 
@@ -68,8 +77,19 @@ def _wrap_content_stream(content):
     raise TypeError('Content must be of type bytes or str, or implement the stream interface.')
 
 
+def build_raw_headers(headers):
+    """Convert a dict of headers to a tuple of tuples. Mimics the format of ClientResponse.
+    """
+    raw_headers = []
+    for k, v in headers.items():
+        raw_headers.append((k.encode('utf8'), v.encode('utf8')))
+    return tuple(raw_headers)
+
+
 class _AioHttPretty:
+
     def __init__(self):
+
         self.calls = []
         self.registry = {}
         self.request = None
@@ -77,15 +97,15 @@ class _AioHttPretty:
     def make_call(self, **kwargs):
         return kwargs
 
-    @asyncio.coroutine
-    def process_request(self, **kwargs):
-        """Process request options as if the request was actually executed."""
+    async def process_request(self, **kwargs):
+        """Process request options as if the request was actually executed.
+        """
         data = kwargs.get('data')
         if isinstance(data, asyncio.StreamReader):
-            yield from data.read()
+            await data.read()
 
-    @asyncio.coroutine
-    def fake_request(self, method, uri, **kwargs):
+    async def fake_request(self, method, uri, **kwargs):
+
         params = kwargs.get('params', None)
         url = ImmutableFurl(uri, params=params)
 
@@ -93,8 +113,8 @@ class _AioHttPretty:
             response = self.registry[(method, url)]
         except KeyError:
             raise Exception(
-                'No URLs matching {method} {uri} with params {url.params}. Not making request. '
-                'Go fix your test.'.format(**locals())
+                'No URLs matching {method} {uri} with params {url.params}.'
+                ' Not making request. Go fix your test.'.format(**locals())
             )
 
         if isinstance(response, collections.Sequence):
@@ -103,33 +123,59 @@ class _AioHttPretty:
             except IndexError:
                 raise Exception('No responses left.')
 
-        yield from self.process_request(**kwargs)
-        self.calls.append(
-            self.make_call(method=method, uri=ImmutableFurl(uri, params=kwargs.pop('params', None)),
-                           **kwargs)
-        )
-        mock_response = aiohttp.client.ClientResponse(method, uri)
-        mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
-        mock_response._loop = mock.Mock()
+        await self.process_request(**kwargs)
+        self.calls.append(self.make_call(
+            method=method,
+            uri=ImmutableFurl(uri, params=kwargs.pop('params', None)),
+            **kwargs
+        ))
 
-        if response.get('auto_length'):
-            defaults = {
-                'Content-Length': str(mock_response.content.size)
-            }
-        else:
-            defaults = {}
+        # For how to mock ``ClientResponse`` for ``aiohttp>=3.1.0``, refer to the following link
+        # https://github.com/pnuckowski/aioresponses/blob/master/aioresponses/core.py#L129-L147
+        loop = Mock()
+        # TODO: Figure out why we need the following two lines.
+        loop.get_debug = Mock()
+        loop.get_debug.return_value = True
 
-        mock_response.headers = aiohttp.multidict.CIMultiDict(response.get('headers', defaults))
+        resp_kwargs = {}
+        resp_kwargs['request_info'] = Mock()
+        resp_kwargs['writer'] = Mock()
+        resp_kwargs['continue100'] = None
+        resp_kwargs['timer'] = TimerNoop()
+        resp_kwargs['traces'] = []
+        resp_kwargs['loop'] = loop
+        resp_kwargs['session'] = None
+
+        # When init `ClientResponse`, the second parameter must be of type ``yarl.URL``
+        # TODO: Integrate a property of this type to ``ImmutableFurl``.
+        y_url = URL(uri)
+        mock_response = ClientResponse(method, y_url, **resp_kwargs)
+
+        # Quote "We need to initialize headers manually"
+        # TODO: Figure out whether we still need this "auto_length".
+        # if response.get('auto_length'):
+        #     defaults = {'Content-Length': str(mock_response.content.size)}
+        # else:
+        #     defaults = {}
+        headers = CIMultiDict(response.get('headers', {}))
+        raw_headers = build_raw_headers(headers)
+        mock_response._headers = headers
+        mock_response._raw_headers = raw_headers
         mock_response.status = response.get('status', 200)
+
+        # TODO: Figure out what ``reason`` is and whether we need it.
+        # mock_response.reason = response.get('')
+
+        # TODO: can we simplify this "_wrap_content_stream()"
+        mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
+
         return mock_response
 
     def register_uri(self, method, uri, **options):
         if any(x.get('params') for x in options.get('responses', [])):
-                raise ValueError('Cannot specify params in responses, call register multiple times.')
-
+            raise ValueError('Cannot specify params in responses, call register multiple times.')
         params = options.pop('params', {})
         url = ImmutableFurl(uri, params=params)
-
         self.registry[(method, url)] = options.get('responses', options)
 
     def register_json_uri(self, method, uri, **options):
@@ -139,10 +185,10 @@ class _AioHttPretty:
         self.register_uri(method, uri, body=body, headers=headers, **options)
 
     def activate(self):
-        aiohttp.ClientSession._request, self.request = self.fake_request, aiohttp.ClientSession._request
+        ClientSession._request, self.request = self.fake_request, ClientSession._request
 
     def deactivate(self):
-        aiohttp.ClientSession._request, self.request = self.request, None
+        ClientSession._request, self.request = self.request, None
 
     def clear(self):
         self.calls = []
@@ -155,8 +201,10 @@ class _AioHttPretty:
         return True
 
     def has_call(self, uri, check_params=True, **kwargs):
+        """Check to see if the given uri was called.  By default will verify that the query params
+        match up.  Setting ``check_params`` to `False` will strip params from the *called* uri, not
+        the passed-in uri."""
         kwargs['uri'] = ImmutableFurl(uri, params=kwargs.pop('params', None))
-
         for call in self.calls:
             if not check_params:
                 call = copy.deepcopy(call)
