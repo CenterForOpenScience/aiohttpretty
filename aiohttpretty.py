@@ -151,23 +151,24 @@ class _AioHttPretty:
         y_url = URL(uri)
         mock_response = ClientResponse(method, y_url, **resp_kwargs)
 
-        # Quote "We need to initialize headers manually"
-        # TODO: Figure out whether we still need this "auto_length".
-        # if response.get('auto_length'):
-        #     defaults = {'Content-Length': str(mock_response.content.size)}
-        # else:
-        #     defaults = {}
+        # TODO: can we simplify this "_wrap_content_stream()"
+        mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
+
+        # Build response headers manually
         headers = CIMultiDict(response.get('headers', {}))
+        if response.get('auto_length'):
+            # Calculate and overwrite the "Content-Length" header on-the-fly if Waterbutler tests
+            # call `aiohttpretty.register_uri()` with `auto_length=True`.
+            headers.update({'Content-Length': str(mock_response.content.size)})
         raw_headers = build_raw_headers(headers)
         mock_response._headers = headers
         mock_response._raw_headers = raw_headers
+
+        # Set response status
         mock_response.status = response.get('status', 200)
 
         # TODO: Figure out what ``reason`` is and whether we need it.
         # mock_response.reason = response.get('')
-
-        # TODO: can we simplify this "_wrap_content_stream()"
-        mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
 
         return mock_response
 
