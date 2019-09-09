@@ -56,6 +56,10 @@ Register the specified request with aiohttpretty.  When `aiohttp.request` is cal
 
 * `status`: Affects the *response*.  The HTTP status code of the response. Defaults to 200.
 
+* `reason`: Affects the *response*. The HTTP reason phrase of the response. Defaults to `''` (an empty string).
+
+* `auto_length`: Affects the *response*. Generate the `Content-Length` header for the response based on the size of the `body`. If the same header is provided in the `headers` option, the value will be overwritten by the auto-generated value.
+
 * `headers`: Affects the *response*. A dict of headers to be included with the response.  Default is *no headers*.
 
 * `body`: Affects the *response*.  The content to be returned when `.read()` is called on the response object.  Must be either `bytes`, `str`, or `instanceOf(asyncio.StreamReader)`.
