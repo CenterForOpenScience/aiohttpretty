@@ -164,11 +164,9 @@ class _AioHttPretty:
         mock_response._headers = headers
         mock_response._raw_headers = raw_headers
 
-        # Set response status
+        # Set response status and reason
         mock_response.status = response.get('status', 200)
-
-        # TODO: Figure out what ``reason`` is and whether we need it.
-        # mock_response.reason = response.get('')
+        mock_response.reason = response.get('reason', '')
 
         return mock_response
 
