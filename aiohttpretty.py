@@ -113,8 +113,8 @@ class _AioHttPretty:
             response = self.registry[(method, url)]
         except KeyError:
             raise Exception(
-                'No URLs matching {method} {uri} with params {url.params}.'
-                ' Not making request. Go fix your test.'.format(**locals())
+                'No URLs matching {method} {uri} with params {url.params}. '
+                'Not making request. Go fix your test.'.format(**locals())
             )
 
         if isinstance(response, collections.Sequence):
@@ -130,44 +130,46 @@ class _AioHttPretty:
             **kwargs
         ))
 
-        # For how to mock ``ClientResponse`` for ``aiohttp>=3.1.0``, refer to the following link
-        # https://github.com/pnuckowski/aioresponses/blob/master/aioresponses/core.py#L129-L147
+        # For how to mock `ClientResponse` for `aiohttp>=3.1.0`, refer to the following link:
+        # https://github.com/pnuckowski/aioresponses/blob/master/aioresponses/core.py#L129-L156
+        # Here is the original commit that added support for `aiohttp>=3.1.0`:
+        # https://github.com/pnuckowski/aioresponses/commit/87cf1041179139ad78a2554713b615684b8987db
         loop = Mock()
-        # TODO: Figure out why we need the following two lines.
         loop.get_debug = Mock()
         loop.get_debug.return_value = True
+        resp_kwargs = {
+            'request_info': Mock(),
+            'writer': Mock(),
+            'continue100': None,
+            'timer': TimerNoop(),
+            'traces': [],
+            'loop': loop,
+            'session': None,
+        }
 
-        resp_kwargs = {}
-        resp_kwargs['request_info'] = Mock()
-        resp_kwargs['writer'] = Mock()
-        resp_kwargs['continue100'] = None
-        resp_kwargs['timer'] = TimerNoop()
-        resp_kwargs['traces'] = []
-        resp_kwargs['loop'] = loop
-        resp_kwargs['session'] = None
-
-        # When init `ClientResponse`, the second parameter must be of type ``yarl.URL``
-        # TODO: Integrate a property of this type to ``ImmutableFurl``.
+        # When init `ClientResponse`, the second parameter must be of type `yarl.URL`
+        # TODO: Integrate a property of this type to `ImmutableFurl`
         y_url = URL(uri)
         mock_response = ClientResponse(method, y_url, **resp_kwargs)
 
-        # Quote "We need to initialize headers manually"
-        # TODO: Figure out whether we still need this "auto_length".
-        # if response.get('auto_length'):
-        #     defaults = {'Content-Length': str(mock_response.content.size)}
-        # else:
-        #     defaults = {}
+        # TODO: can we simplify this `_wrap_content_stream()`
+        mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
+
+        # Build response headers manually
         headers = CIMultiDict(response.get('headers', {}))
+        if response.get('auto_length'):
+            # Calculate and overwrite the "Content-Length" header on-the-fly if Waterbutler tests
+            # call `aiohttpretty.register_uri()` with `auto_length=True`
+            headers.update({'Content-Length': str(mock_response.content.size)})
         raw_headers = build_raw_headers(headers)
+        # Use `._headers` and `._raw_headers` for `aiohttp>=3.3.0`, compared to using `.headers` and
+        # `.raw_headers` for `3.3.0>aiohttp>=3.1.0`
         mock_response._headers = headers
         mock_response._raw_headers = raw_headers
+
+        # Set response status and reason
         mock_response.status = response.get('status', 200)
-
-        # TODO: Figure out what ``reason`` is and whether we need it.
-        # mock_response.reason = response.get('')
-
-        # TODO: can we simplify this "_wrap_content_stream()"
-        mock_response.content = _wrap_content_stream(response.get('body', 'aiohttpretty'))
+        mock_response.reason = response.get('reason', '')
 
         return mock_response
 
