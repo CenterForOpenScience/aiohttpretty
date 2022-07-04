@@ -71,3 +71,6 @@ class AioHttPretty:
     def decorate(
         self, func: typing.Callable[P, T]
     ) -> typing.Callable[P, T]: ...
+
+
+aiohttpretty: AioHttPretty
