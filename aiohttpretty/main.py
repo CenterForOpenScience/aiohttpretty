@@ -30,6 +30,19 @@ class AioHttPretty:
         self.registry = {}
         self.request = None
 
+    async def fake_request(
+        self, method: METHODS, uri: str, **kwargs: typing.Any
+    ):
+
+        response = self._find_request(method, uri, kwargs)
+
+        await self.process_request(**kwargs)
+        self.make_call(
+            method=method, uri=uri, **kwargs,
+        )
+
+        return self._build_response(method, uri, response)
+
     async def process_request(self, **kwargs):
         """Process request options as if the request was actually executed.
         """
@@ -47,61 +60,6 @@ class AioHttPretty:
                 **kwargs,
             }
         )
-
-    async def fake_request(
-        self, method: METHODS, uri: str, **kwargs: typing.Any
-    ):
-
-        response = self._find_request(method, uri, kwargs)
-
-        await self.process_request(**kwargs)
-        self.make_call(
-            method=method, uri=uri, **kwargs,
-        )
-
-        return self._build_response(method, uri, response)
-
-    def _build_response(
-        self,
-        method: METHODS,
-        uri: str,
-        response: typing.Mapping[str, typing.Any],
-    ):
-        loop = Mock()
-        loop.get_debug = Mock()
-        loop.get_debug.return_value = True
-
-        y_url = URL(uri)
-        mock_response = ClientResponse(
-            method,
-            y_url,
-            request_info=Mock(),
-            writer=Mock(),
-            continue100=None,
-            timer=TimerNoop(),
-            traces=[],
-            loop=loop,
-            session=None,  # type: ignore
-        )
-
-        content = helpers.wrap_content_stream(
-            response.get('body', 'aiohttpretty')
-        )
-        mock_response.content = content  # type: ignore
-
-        # Build response headers manually
-        headers = CIMultiDict(response.get('headers', {}))
-        if response.get('auto_length'):
-            headers.update({'Content-Length': str(content)})
-        raw_headers = helpers.build_raw_headers(headers)
-
-        mock_response._headers = CIMultiDictProxy(headers)
-        mock_response._raw_headers = raw_headers
-
-        # Set response status and reason
-        mock_response.status = response.get('status', HTTPStatus.OK)
-        mock_response.reason = response.get('reason', '')
-        return mock_response
 
     def _find_request(
         self,
@@ -131,6 +89,48 @@ class AioHttPretty:
                 ) from error
 
         return response
+
+    def _build_response(
+        self,
+        method: METHODS,
+        uri: str,
+        response: typing.Mapping[str, typing.Any],
+    ):
+        loop = Mock()
+        loop.get_debug = Mock()
+        loop.get_debug.return_value = True
+
+        y_url = URL(uri)
+        mock_response = ClientResponse(
+            method,
+            y_url,
+            request_info=Mock(),
+            writer=Mock(),
+            continue100=None,
+            timer=TimerNoop(),
+            traces=[],
+            loop=loop,
+            session=Mock(),
+        )
+
+        content = helpers.wrap_content_stream(
+            response.get('body', 'aiohttpretty')
+        )
+        mock_response.content = content  # type: ignore
+
+        # Build response headers manually
+        headers = CIMultiDict(response.get('headers', {}))
+        if response.get('auto_length'):
+            headers.update({'Content-Length': str(content)})
+        raw_headers = helpers.build_raw_headers(headers)
+
+        mock_response._headers = CIMultiDictProxy(headers)
+        mock_response._raw_headers = raw_headers
+
+        # Set response status and reason
+        mock_response.status = response.get('status', HTTPStatus.OK)
+        mock_response.reason = response.get('reason', '')
+        return mock_response
 
     def validate_body(self, options: typing.Mapping[str, typing.Any]):
         if body := options.get('body'):
@@ -204,12 +204,14 @@ class AioHttPretty:
         return False
 
     @contextmanager
-    def open(self):
+    def open(self, clear: bool = True):
+        if clear:
+            self.clear()
         self.activate()
         yield
         self.deactivate()
 
-    def async_call(self, func: AsyncCallableT) -> AsyncCallableT:
+    def async_decorate(self, func: AsyncCallableT) -> AsyncCallableT:
         @wraps(func)
         async def inner(*args, **kwargs):
             with self.open():
@@ -217,7 +219,7 @@ class AioHttPretty:
 
         return inner  # type: ignore
 
-    def call(self, func: CallableT) -> CallableT:
+    def decorate(self, func: CallableT) -> CallableT:
         return self.open()(func)  # type: ignore
 
 
