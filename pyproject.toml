@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aiohttpretty"
-version = "1.0.0"
+version = "22.0.0"
 description = "AioHTTPretty"
 authors = [
     "Gustavo Correa <self.gustavocorrea@gmail.com>",

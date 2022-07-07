@@ -1,4 +1,4 @@
 from .main import aiohttpretty
 
 __all__ = ['aiohttpretty']
-__version__ = '1.0.0'
+__version__ = '22.0.0'
