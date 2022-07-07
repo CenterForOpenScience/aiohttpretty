@@ -99,7 +99,8 @@ class AioHttPretty:
         loop = Mock()
         loop.get_debug = Mock()
         loop.get_debug.return_value = True
-
+        # When init `ClientResponse`, the second parameter must be of type `yarl.URL`
+        # TODO: Integrate a property of this type to `ImmutableFurl`
         y_url = URL(uri)
         mock_response = ClientResponse(
             method,
@@ -121,6 +122,8 @@ class AioHttPretty:
         # Build response headers manually
         headers = CIMultiDict(response.get('headers', {}))
         if response.get('auto_length'):
+            # Calculate and overwrite the "Content-Length" header on-the-fly if Waterbutler tests
+            # call `aiohttpretty.register_uri()` with `auto_length=True`
             headers.update({'Content-Length': str(content)})
         raw_headers = helpers.build_raw_headers(headers)
 
@@ -133,6 +136,7 @@ class AioHttPretty:
         return mock_response
 
     def validate_body(self, options: typing.Mapping[str, typing.Any]):
+        """Validate body type to prevent unexpected behavior"""
         if body := options.get('body'):
             if not isinstance(
                 body, (str, bytes)
@@ -147,6 +151,7 @@ class AioHttPretty:
             raise exc.InvalidResponses(
                 'Cannot specify params in responses, call register multiple times.'
             )
+        # Validates body before registry instead of during call following the fail-fast principle
         self.validate_body(options)
         params = options.pop('params', {})
         url = types.ImmutableFurl(uri, params=params)
