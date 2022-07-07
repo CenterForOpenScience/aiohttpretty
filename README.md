@@ -94,32 +94,31 @@ Purge the registry and the list of intercepted calls.
 
 Checks to see if the given uri was called during the test.  By default, will verify that the query params match up.  Setting `check_params` to `False` will strip params from the *registered* uri, not the passed-in uri.
 
+### `.open(clear: bool = True)`
+Runs `.clear()` if `clear`, `.activate()` on enter and `.deactivate()` on exit. 
+
+### `.async_decorate(func)`
+Decorator to run `with aiohttpretty.open()` before running coroutine function
+
+### `.decorate(func)`
+Same as `.async_decorate()` but for normal functions
 
 ## Other
 
 ### pytest marker
 
-To simplify usage of `aiohttpretty` in tests, you can make a pytest marker that will automatically activate/deactivate `aiohttpretty` for the scope of a test.  To do so, add the following to your `conftest.py`:
+To simplify usage of `aiohttpretty` in tests, it already ships with a pytest plugin. To use, add `@pytest.mark.aiohttpretty` to your test:
 
+```python
+import pytest
+
+@pytest.mark.aiohttpretty
+async def my_test():
+    # inside test function aiohttpretty is clean and active
+    assert thing() == other
+
+@pytes.mark.aiohttpretty
+def my_other_test(test_client):
+    # aiohttpretty also supports sync functions in case of testing web applications
+    assert test_client.get('/my-route') == other
 ```
-import aiohttpretty
-
-def pytest_configure(config):
-    config.addinivalue_line(
-        'markers',
-        'aiohttpretty: mark tests to activate aiohttpretty'
-    )
-
-def pytest_runtest_setup(item):
-    marker = item.get_marker('aiohttpretty')
-    if marker is not None:
-        aiohttpretty.clear()
-        aiohttpretty.activate()
-
-def pytest_runtest_teardown(item, nextitem):
-    marker = item.get_marker('aiohttpretty')
-    if marker is not None:
-        aiohttpretty.deactivate()
-```
-
-Then add `@pytest.mark.aiohttpretty` before `async def test_foo`.
