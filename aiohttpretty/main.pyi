@@ -72,5 +72,4 @@ class AioHttPretty:
         self, func: typing.Callable[P, T]
     ) -> typing.Callable[P, T]: ...
 
-
 aiohttpretty: AioHttPretty

@@ -3,8 +3,8 @@ name = "aiohttpretty"
 version = "22.0.0"
 description = "AioHTTPretty"
 authors = [
+    "Center for Open Science <contact@cos.io>",
     "Gustavo Correa <self.gustavocorrea@gmail.com>",
-    "Center for Open Science <contact@cos.i>",
 ]
 classifiers = [
     'Development Status :: 4 - Beta',

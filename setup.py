@@ -30,7 +30,7 @@ setup_kwargs = {
     'description': 'AioHTTPretty',
     'long_description': None,
     'author': 'Center for Open Science',
-    'author_email': 'contact@cos.i',
+    'author_email': 'contact@cos.io',
     'maintainer': None,
     'maintainer_email': None,
     'url': None,
