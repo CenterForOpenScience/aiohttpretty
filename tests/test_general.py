@@ -125,9 +125,11 @@ class TestGeneral(unittest.IsolatedAsyncioTestCase):
         assert aiohttpretty.request is not None
         assert id(aiohttpretty.request) == orig_real_id
 
-        assert ClientSession._request == aiohttpretty.fake_request
         assert id(ClientSession._request) != orig_real_id
-        assert id(ClientSession._request) == orig_fake_id
+        # check that ClientSession._request and aiohttpretty.fake_request are the same underlying function
+        assert ClientSession._request.__func__ is aiohttpretty.fake_request.__func__
+        # check that ClientSession._request and aiohttpretty.fake_request are bound to the same class
+        assert ClientSession._request.__self__ is aiohttpretty
 
         aiohttpretty.deactivate()
 
