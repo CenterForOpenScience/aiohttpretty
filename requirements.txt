@@ -1,4 +1,4 @@
-aiohttp>=3.11.0
+aiohttp>=3.10.5
 furl==2.1.4
 multidict==6.4.3
 yarl==1.19.0
