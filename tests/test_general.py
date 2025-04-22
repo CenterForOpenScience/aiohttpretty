@@ -76,7 +76,7 @@ class TestGeneral(unittest.IsolatedAsyncioTestCase):
         response = await aiohttpretty.fake_request('GET',
                                                    'http://example.com/')
         data = await response.read()
-        assert data == 'example résumé data'.encode('utf-8')
+        assert data == 'example résumé data'.encode()
 
     async def test_has_call(self):
         aiohttpretty.register_uri('GET',

@@ -114,8 +114,8 @@ class _AioHttPretty:
             response = self.registry[(method, url)]
         except KeyError:
             raise Exception(
-                'No URLs matching {method} {uri} with params {url.params}. '
-                'Not making request. Go fix your test.'.format(**locals())
+                f'No URLs matching {method} {uri} with params {url.params}. '
+                f'Not making request. Go fix your test.'
             )
 
         if isinstance(response, Sequence):
