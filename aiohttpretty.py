@@ -2,7 +2,7 @@ import sys
 import copy
 import json
 import asyncio
-import collections
+from collections.abc import Sequence
 from unittest.mock import Mock
 
 from yarl import URL
@@ -55,8 +55,9 @@ class _MockStream(StreamReader):
 
     def __init__(self, data):
 
+        DEFAULT_LIMIT = 2 ** 16
         protocol = BaseProtocol(Mock())
-        super().__init__(protocol)
+        super().__init__(protocol, limit=DEFAULT_LIMIT)
 
         self.size = len(data)
         self.feed_data(data)
@@ -113,11 +114,11 @@ class _AioHttPretty:
             response = self.registry[(method, url)]
         except KeyError:
             raise Exception(
-                'No URLs matching {method} {uri} with params {url.params}. '
-                'Not making request. Go fix your test.'.format(**locals())
+                f'No URLs matching {method} {uri} with params {url.params}. '
+                f'Not making request. Go fix your test.'
             )
 
-        if isinstance(response, collections.Sequence):
+        if isinstance(response, Sequence):
             try:
                 response = response.pop(0)
             except IndexError:

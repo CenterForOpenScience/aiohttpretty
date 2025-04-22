@@ -1,5 +1,5 @@
 -r requirements.txt
 
-flake8==3.7.6
-pytest==4.3.1
-pytest-cov==2.6.1
+flake8==7.2.0
+pytest==8.3.5
+pytest-cov==6.1.1

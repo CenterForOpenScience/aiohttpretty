@@ -7,16 +7,6 @@ from aiohttp import ClientSession
 
 import aiohttpretty
 
-
-def async_test(f):
-    def wrapper(*args, **kwargs):
-        coro = asyncio.coroutine(f)
-        future = coro(*args, **kwargs)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(future)
-    return wrapper
-
-
 class DummyAsyncStream(asyncio.StreamReader):
 
     def __init__(self, data):
@@ -25,13 +15,11 @@ class DummyAsyncStream(asyncio.StreamReader):
         self.feed_data(data)
         self.feed_eof()
 
-
-class TestGeneral(unittest.TestCase):
+class TestGeneral(unittest.IsolatedAsyncioTestCase):
 
     def tearDown(self):
         aiohttpretty.clear()
 
-    @async_test
     async def test_fake_request(self):
         desired_response = b'example data'
         url = 'http://example.com/'
@@ -58,7 +46,6 @@ class TestGeneral(unittest.TestCase):
         options = aiohttpretty.registry[('GET', 'http://example.com/')]
         assert json.loads(options['body'].decode('utf-8')) == desired_response
 
-    @async_test
     async def test_param_handling(self):
         url = 'http://example-params.com/?test=test'
         desired_error_msg = (
@@ -70,7 +57,6 @@ class TestGeneral(unittest.TestCase):
         except Exception as exception:
             assert str(exception) == desired_error_msg
 
-    @async_test
     async def test_params(self):
         desired_response = b'example data'
         url = 'http://example.com/'
@@ -83,7 +69,6 @@ class TestGeneral(unittest.TestCase):
         data = await response.read()
         assert data == desired_response
 
-    @async_test
     async def test_str_response_encoding(self):
         aiohttpretty.register_uri('GET',
                                   'http://example.com/',
@@ -91,9 +76,8 @@ class TestGeneral(unittest.TestCase):
         response = await aiohttpretty.fake_request('GET',
                                                    'http://example.com/')
         data = await response.read()
-        assert data == 'example résumé data'.encode('utf-8')
+        assert data == 'example résumé data'.encode()
 
-    @async_test
     async def test_has_call(self):
         aiohttpretty.register_uri('GET',
                                   'http://example.com/',
@@ -141,9 +125,11 @@ class TestGeneral(unittest.TestCase):
         assert aiohttpretty.request is not None
         assert id(aiohttpretty.request) == orig_real_id
 
-        assert ClientSession._request == aiohttpretty.fake_request
         assert id(ClientSession._request) != orig_real_id
-        assert id(ClientSession._request) == orig_fake_id
+        # check that ClientSession._request and aiohttpretty.fake_request are the same underlying function
+        assert ClientSession._request.__func__ is aiohttpretty.fake_request.__func__
+        # check that ClientSession._request and aiohttpretty.fake_request are bound to the same class
+        assert ClientSession._request.__self__ is aiohttpretty
 
         aiohttpretty.deactivate()
 
@@ -152,7 +138,6 @@ class TestGeneral(unittest.TestCase):
         assert id(ClientSession._request) == orig_real_id
         assert id(ClientSession._request) != orig_fake_id
 
-    @async_test
     async def test_multiple_responses(self):
         aiohttpretty.register_uri(
             'GET',
@@ -209,7 +194,6 @@ class TestGeneral(unittest.TestCase):
                 ],
             )
 
-    @async_test
     async def test_headers_in_response(self):
         aiohttpretty.register_uri('GET', 'http://example.com/',
                                   headers={'X-Magic-Header': '1'})
@@ -217,7 +201,6 @@ class TestGeneral(unittest.TestCase):
         first_resp = await aiohttpretty.fake_request('GET', 'http://example.com/')
         assert 'X-Magic-Header' in first_resp.headers
 
-    @async_test
     async def test_async_streaming_body(self):
         stream = DummyAsyncStream(b'meow')
         aiohttpretty.register_uri('GET', 'http://example.com/', body=stream)
@@ -225,14 +208,12 @@ class TestGeneral(unittest.TestCase):
         resp = await aiohttpretty.fake_request('GET', 'http://example.com/')
         assert await resp.read() == b'meow'
 
-    @async_test
     async def test_invalid_body(self):
         aiohttpretty.register_uri('GET', 'http://example.com/', body=1234)
 
         with pytest.raises(TypeError):
             await aiohttpretty.fake_request('GET', 'http://example.com/')
 
-    @async_test
     async def test_passed_data_is_read(self):
         aiohttpretty.register_uri('GET', 'http://example.com/', body='woof')
 
@@ -244,7 +225,6 @@ class TestGeneral(unittest.TestCase):
         assert stream.at_eof()
         assert await resp.read() == b'woof'
 
-    @async_test
     async def test_aiohttp_request(self):
         aiohttpretty.register_uri('GET', 'http://example.com/', body=b'example data')
 

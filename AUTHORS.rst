@@ -14,3 +14,4 @@ Contributors
 - Lyndsy Simon `@lyndsysimon <https://github.com/lyndsysimon>`_
 - Michael Haselton `@icereval <https://github.com/icereval>`_
 - Mikhail Mezyakov `@aluminiumgeek <https://github.com/aluminiumgeek>`_
+- Futa Ikeda `@futa-ikeda <https://github.com/futa-ikeda>`_
