@@ -10,7 +10,7 @@ requirements = parse_requirements('requirements.txt')
 
 setup(
     name='aiohttpretty',
-    version='19.0.0',
+    version='25.0.0',
     description='AioHTTPretty',
     author='Center for Open Science',
     author_email='contact@cos.io',
